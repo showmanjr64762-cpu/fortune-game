@@ -57,6 +57,12 @@ async function loadPlayers() {
 }
 
 loadPlayers();
+const socket = io();
+
+socket.on("adminUpdate", (data) => {
+    console.log(data); // join/spin/leave events
+    // Update your admin dashboard UI
+});
 </script>
 
 </body>
