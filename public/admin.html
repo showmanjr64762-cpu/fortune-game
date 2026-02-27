@@ -2,67 +2,61 @@
 <html>
 <head>
   <title>Admin Dashboard</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      color: gold;
+    }
+
+    .card {
+      background: #222;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Players List</h1>
 
-  <button onclick="loadPlayers()">Load Players</button>
+<h1>🎮 Live Admin Dashboard</h1>
 
-  <ul id="players"></ul>
+<div id="events"></div>
 
-  <script>
-    function loadPlayers() {
-      fetch("/admin/players")
-        .then(res => res.json())
-        .then(data => {
-          const list = document.getElementById("players");
-          list.innerHTML = "";
-
-          data.forEach(player => {
-            const li = document.createElement("li");
-            li.innerText = player.name + " - Coins: " + player.coins;
-            list.appendChild(li);
-          });
-        });
-    }
-  </script>
 <script>
-async function loadPlayers() {
-  try {
-    const res = await fetch("/admin/players");
-    const data = await res.json();
+  const socket = io();
+  const eventsDiv = document.getElementById("events");
 
-    const container = document.getElementById("players");
-    container.innerHTML = "";
+  function addEvent(text) {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerText = text;
+    eventsDiv.prepend(div);
+  }
 
-    if (!data) {
-      container.innerHTML = "<p>No players found</p>";
-      return;
+  socket.on("connect", () => {
+    addEvent("🟢 Admin Connected to Server");
+  });
+
+  socket.on("adminUpdate", (data) => {
+    if (data.action === "join") {
+      addEvent(`👤 Player Joined: ${data.player}`);
     }
 
-    Object.entries(data).forEach(([id, player]) => {
-      const div = document.createElement("div");
-      div.innerHTML = `
-        <hr>
-        <p><strong>Name:</strong> ${player.name}</p>
-        <p><strong>Coins:</strong> ${player.coins}</p>
-        <p><strong>Banned:</strong> ${player.banned ? "Yes" : "No"}</p>
-      `;
-      container.appendChild(div);
-    });
+    if (data.action === "spin") {
+      addEvent(`🎰 ${data.player} spun and got: ${data.result}`);
+    }
 
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-loadPlayers();
-const socket = io();
-
-socket.on("adminUpdate", (data) => {
-    console.log(data); // join/spin/leave events
-    // Update your admin dashboard UI
-});
+    if (data.action === "leave") {
+      addEvent(`❌ Player Left`);
+    }
+  });
 </script>
 
 </body>
