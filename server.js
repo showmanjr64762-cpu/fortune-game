@@ -6,6 +6,11 @@ const cors = require("cors");
 const path = require("path");
 const admin = require("firebase-admin");
 
+const express = require("express");
+const app = express();
+app.use(express.json());
+
+
 // 🔥 Firebase Admin using Render Environment Variables
 admin.initializeApp({
   credential: admin.credential.cert({
@@ -48,6 +53,12 @@ async function getPlayers() {
 // Routes
 // ======================
 
+app.get("/admin-dashboard", (req, res) => {
+  res.sendFile(__dirname + "/public/admin-dashboard.html");
+});
+
+
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -73,6 +84,17 @@ app.get("/add-test-player", async (req, res) => {
   } catch (error) {
     res.status(500).send("Error adding test player");
   }
+});
+
+
+app.post("/admin-login", (req, res) => {
+  const { password } = req.body;
+
+  if (password === process.env.ADMIN_PASSWORD) {
+    return res.json({ success: true });
+  }
+
+  res.status(401).json({ success: false });
 });
 
 // Game routes

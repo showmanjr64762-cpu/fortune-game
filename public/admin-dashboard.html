@@ -5,6 +5,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+
   <style>
     body {
       margin: 0;
@@ -129,6 +130,12 @@
 </div>
 
 <script>
+
+  app.use(express.static("public"));
+
+app.get("/admin", (req, res) => {
+  res.sendFile(__dirname + "/public/admin-login.html");
+});
   const socket = io();
 
   let players = {};
