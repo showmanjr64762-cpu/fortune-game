@@ -1,41 +1,46 @@
+// routes/gameRoutes.js
 const express = require("express");
 const router = express.Router();
-const db = require("../config/firebase");
-const admin = require("firebase-admin");
+const db = require("../config/firebase"); // Import initialized db
 
-const db = admin.database();
-const playersRef = db.ref("players");
+// Join game
+router.post("/join", async (req, res) => {
+  const { name } = req.body;
+
+  try {
+    const ref = db.ref("players");
+    const newPlayer = ref.push();
+    await newPlayer.set({ name, coins: 1000 });
+
+    res.json({ success: true, id: newPlayer.key });
+  } catch (err) {
+    console.error("Error joining game:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // Spin route
 router.post("/spin", async (req, res) => {
-  try {
-    const { playerId, bet } = req.body;
+  const { playerId, bet } = req.body;
 
-    const snapshot = await playersRef.child(playerId).once("value");
+  try {
+    const playerRef = db.ref(`players/${playerId}`);
+    const snapshot = await playerRef.once("value");
     const player = snapshot.val();
 
     if (!player) return res.status(404).json({ message: "Player not found" });
     if (player.coins < bet) return res.status(400).json({ message: "Not enough coins" });
 
     player.coins -= bet;
-
     const win = Math.random() < 0.3;
-    let winAmount = 0;
-    if (win) {
-      winAmount = bet * 2;
-      player.coins += winAmount;
-    }
+    if (win) player.coins += bet * 2;
 
-    await playersRef.child(playerId).set(player);
-
-    res.json({ win, winAmount, remainingCoins: player.coins });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    await playerRef.set(player);
+    res.json({ win, coins: player.coins });
+  } catch (err) {
+    console.error("Error spinning:", err);
+    res.status(500).json({ error: err.message });
   }
-});
-
-router.get("/", (req, res) => {
-  res.json({ message: "Game route working" });
 });
 
 module.exports = router;

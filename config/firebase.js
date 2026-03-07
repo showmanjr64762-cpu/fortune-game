@@ -1,6 +1,7 @@
 // config/firebase.js
 const admin = require("firebase-admin");
 
+// Initialize Firebase only once
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
@@ -15,4 +16,6 @@ if (!admin.apps.length) {
 }
 
 const db = admin.database();
+console.log("✅ Firebase initialized successfully");
+
 module.exports = db;
